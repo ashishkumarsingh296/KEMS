@@ -1,9 +1,43 @@
-version: '3.8'
+version: "3.8"
+
 services:
   mysql:
     image: mysql:8
+    container_name: kems-mysql
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: kemsdb
+      MYSQL_USER: kemsuser
+      MYSQL_PASSWORD: kemspass
     ports:
-      - "3306:3306"
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    container_name: kems-redis
+    restart: always
+    ports:
+      - "6380:6379"
+
+  app:
+    build: .
+    container_name: kems-app
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/kemsdb
+      SPRING_DATASOURCE_USERNAME: kemsuser
+      SPRING_DATASOURCE_PASSWORD: kemspass
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      JWT_SECRET: your_secret_key
+    ports:
+      - "8081:8081"
+
+volumes:
+  mysql_data:
